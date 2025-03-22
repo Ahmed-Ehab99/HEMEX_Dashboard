@@ -4,8 +4,9 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: "http",
+        protocol: "https",
         hostname: "backapi.hemmx.org",
+        pathname: "/uploads/**",
       },
     ],
   },
