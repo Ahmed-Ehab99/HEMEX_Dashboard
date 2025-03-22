@@ -1,21 +1,35 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { ReactElement, useRef, useState } from "react";
 import axios from "axios";
 import Image from "next/image";
-import { Avatar, Box, Button, Modal, TextField } from "@mui/material";
+import {
+  Alert,
+  Avatar,
+  Box,
+  Button,
+  Modal,
+  Slide,
+  Snackbar,
+  TextField,
+} from "@mui/material";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import CloseIcon from "@mui/icons-material/Close";
 import ModeEditOutlinedIcon from "@mui/icons-material/ModeEditOutlined";
 import ProfileLoader from "./ProfileLoader";
+import { useProfile } from "../context/ProfileContext";
+import { TransitionProps } from "@mui/material/transitions";
 
-interface ProfileData {
-  image: string;
-  name: string;
-  birth_date: string;
-}
+export const getImagePath = (imagePath: string | null) => {
+  if (!imagePath) return "/no_image.png";
+  if (imagePath.startsWith("local:")) {
+    return imagePath.substring(6); // Remove the "local:" prefix
+  }
+  if (imagePath.startsWith("http")) return imagePath;
+  return `${process.env.NEXT_PUBLIC_API_URL}/${imagePath}`;
+};
 
 const style = {
   position: "absolute",
@@ -32,12 +46,30 @@ const style = {
 
 const StudentProfile = () => {
   const [open, setOpen] = useState(false);
-  const [profileData, setProfileData] = useState<ProfileData | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const {
+    profileData,
+    isLoading,
+    setIsLoading,
+    updateProfileImage,
+    refreshProfile,
+  } = useProfile();
 
   const [name, setName] = useState("");
   const [birthDate, setBirthDate] = useState<Date | null>(null);
+
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">(
+    "success"
+  );
+
+  function SlideTransition(
+    props: TransitionProps & { children: ReactElement }
+  ) {
+    return <Slide {...props} direction="left" />;
+  }
 
   const handleOpen = () => {
     if (profileData) {
@@ -59,29 +91,7 @@ const StudentProfile = () => {
     const file = event.target.files?.[0];
     if (file) {
       const imageUrl = URL.createObjectURL(file);
-      setProfileData((prev) => (prev ? { ...prev, image: imageUrl } : null));
-    }
-  };
-
-  const getStudent = async () => {
-    setIsLoading(true);
-    const authToken = process.env.NEXT_PUBLIC_AUTH_TOKEN;
-    if (!authToken) {
-      console.error("No authToken found");
-      return;
-    }
-    try {
-      const url = `${process.env.NEXT_PUBLIC_API_URL}/accounts/students/6`;
-
-      const { data } = await axios.get(url, {
-        headers: { userKey: authToken },
-      });
-
-      setProfileData(data?.student);
-    } catch (error) {
-      console.error("Error fetching student:", error);
-    } finally {
-      setIsLoading(false);
+      updateProfileImage(`local:${imageUrl}`);
     }
   };
 
@@ -100,7 +110,6 @@ const StudentProfile = () => {
       if (fileInputRef.current?.files && fileInputRef.current.files[0]) {
         formData.append("image", fileInputRef.current.files[0]);
       }
-
       formData.append("name", name || "");
       if (birthDate) {
         formData.append("birth_date", birthDate.toISOString());
@@ -114,19 +123,20 @@ const StudentProfile = () => {
         }
       );
 
-      console.log("Profile updated successfully");
-      await getStudent();
+      setSnackbarMessage("Profile updated successfully!");
+      setSnackbarSeverity("success");
+      setOpenSnackbar(true);
+      await refreshProfile();
       handleClose();
     } catch (error) {
       console.error("Error updating student profile:", error);
+      setSnackbarMessage("Failed to update profile.");
+      setSnackbarSeverity("error");
+      setOpenSnackbar(true); // Show error toast
     } finally {
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    getStudent();
-  }, []);
 
   const formatDate = (dateString: string) => {
     if (!dateString) return "";
@@ -136,12 +146,6 @@ const StudentProfile = () => {
       day: "2-digit",
       year: "numeric",
     }).format(date);
-  };
-
-  const getImagePath = (imagePath: string | null) => {
-    if (!imagePath) return "/no_image.png";
-    if (imagePath.startsWith("http")) return imagePath;
-    return `${process.env.NEXT_PUBLIC_API_URL}/${imagePath}`;
   };
 
   return (
@@ -155,7 +159,7 @@ const StudentProfile = () => {
             alt="Profile"
             width={100}
             height={100}
-            className="w-24 h-24 rounded-full"
+            className="w-24 h-24 rounded-full object-cover"
           />
 
           <div className="flex flex-col gap-2">
@@ -230,6 +234,22 @@ const StudentProfile = () => {
               </button>
             </Box>
           </Modal>
+
+          <Snackbar
+            open={openSnackbar}
+            autoHideDuration={4000}
+            onClose={() => setOpenSnackbar(false)}
+            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+            slots={{ transition: SlideTransition }}
+          >
+            <Alert
+              severity={snackbarSeverity}
+              variant="filled"
+              onClose={() => setOpenSnackbar(false)}
+            >
+              {snackbarMessage}
+            </Alert>
+          </Snackbar>
         </div>
       )}
     </>

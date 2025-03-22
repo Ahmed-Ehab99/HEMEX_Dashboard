@@ -9,6 +9,8 @@ import ScheduleOutlinedIcon from "@mui/icons-material/ScheduleOutlined";
 import CircleProgress from "./CircleProgress";
 import LinearProgressBar from "./LinearProgressBar";
 import axios from "axios";
+import { useProfile } from "@/app/context/ProfileContext";
+import { getImagePath } from "../StudentProfile";
 
 interface StudentRound {
   id: number;
@@ -30,15 +32,16 @@ interface Progress {
 
 interface Track {
   id: number;
-  name: string;
+  course_name: string;
 }
 
 const LearningProgress = () => {
   const [progress, setProgress] = useState<Progress | null>(null);
-  const [tracks, setTracks] = useState<Track[]>([]);
+  const [courses, setCourses] = useState<Track[]>([]);
   const [isLoadingProgress, setIsLoadingProgress] = useState(false);
   const [isLoadingTracks, setIsLoadingTracks] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+  const { profileData } = useProfile();
 
   const authToken = process.env.NEXT_PUBLIC_AUTH_TOKEN;
 
@@ -80,7 +83,7 @@ const LearningProgress = () => {
     setIsLoadingTracks(true);
 
     try {
-      const url = `${process.env.NEXT_PUBLIC_API_URL}/tracks`;
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/tracks/1`;
 
       const { data } = await axios.get(url, {
         headers: {
@@ -88,7 +91,7 @@ const LearningProgress = () => {
         },
       });
 
-      setTracks(data.tracks);
+      setCourses(data.track.courses);
     } catch (error) {
       console.error("Error fetching tracks:", error);
     } finally {
@@ -108,7 +111,7 @@ const LearningProgress = () => {
   return (
     <div className="lg:mt-20 mt-10 flex flex-col items-center gap-20 w-full">
       <CircularProgressBar
-        steps={tracks?.map((track) => track.name) || []}
+        steps={courses?.map((course) => course.course_name) || []}
         currentStep={currentStep}
         onStepChange={setCurrentStep}
       />
@@ -126,11 +129,11 @@ const LearningProgress = () => {
           >
             <div className="flex flex-col justify-center gap-5">
               <Image
-                src="/no_image.png"
+                src={getImagePath(profileData?.image || null)}
                 alt="Student Image"
                 width={100}
                 height={100}
-                className="rounded-full"
+                className="w-24 h-24 rounded-full object-cover"
               />
 
               <div className="flex items-center justify-center gap-2">
@@ -143,10 +146,12 @@ const LearningProgress = () => {
 
             <div className="flex flex-col justify-between items-center gap-4">
               <span className="text-xl font-medium">
-                {progress?.student?.name || ""}
+                {profileData?.name || ""}
               </span>
 
-              <span className="text-sm font-normal">{round.name}</span>
+              <span className="text-sm font-normal capitalize">
+                {round.name}
+              </span>
 
               <div className="flex gap-2 items-center">
                 <ScheduleOutlinedIcon fontSize="small" />

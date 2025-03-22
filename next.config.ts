@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
         pathname: "/uploads/**",
       },
     ],
+    domains: ["backapi.hemmx.org", "localhost"],
   },
 };
 
