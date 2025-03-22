@@ -2,7 +2,12 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    domains: ["backapi.hemmx.org"],
+    remotePatterns: [
+      {
+        protocol: "http",
+        hostname: "backapi.hemmx.org",
+      },
+    ],
   },
 };
 
