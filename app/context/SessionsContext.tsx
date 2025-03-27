@@ -85,7 +85,6 @@ export const SessionsProvider: React.FC<{
         { student_id: studentId, track_id: trackId },
         {
           headers: {
-            "Content-Type": "application/json",
             userKey: authToken,
           },
         }

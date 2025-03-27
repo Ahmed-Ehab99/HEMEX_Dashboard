@@ -48,14 +48,9 @@ const StudentProfile = () => {
   const [open, setOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const {
-    profileData,
-    isLoading,
-    setIsLoading,
-    updateProfileImage,
-    refreshProfile,
-  } = useProfile();
+  const { profileData, isLoading, setIsLoading, refreshProfile } = useProfile();
 
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [birthDate, setBirthDate] = useState<Date | null>(null);
 
@@ -77,6 +72,7 @@ const StudentProfile = () => {
       setBirthDate(
         profileData.birth_date ? new Date(profileData.birth_date) : null
       );
+      setSelectedImage(null);
     }
     setOpen(true);
   };
@@ -91,7 +87,8 @@ const StudentProfile = () => {
     const file = event.target.files?.[0];
     if (file) {
       const imageUrl = URL.createObjectURL(file);
-      updateProfileImage(`local:${imageUrl}`);
+      // updateProfileImage(`local:${imageUrl}`);
+      setSelectedImage(imageUrl);
     }
   };
 
@@ -127,6 +124,7 @@ const StudentProfile = () => {
       setSnackbarSeverity("success");
       setOpenSnackbar(true);
       await refreshProfile();
+      setSelectedImage(null);
       handleClose();
     } catch (error) {
       console.error("Error updating student profile:", error);
@@ -194,9 +192,14 @@ const StudentProfile = () => {
                 >
                   <Avatar
                     alt="Student Image"
-                    src={getImagePath(profileData?.image || null)}
+                    src={
+                      selectedImage || getImagePath(profileData?.image || null)
+                    }
                     sx={{ width: 100, height: 100 }}
                   />
+                  <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out text-center text-[#2f006c]">
+                    Change Image
+                  </span>
                 </div>
 
                 <TextField

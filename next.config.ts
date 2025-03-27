@@ -8,8 +8,12 @@ const nextConfig: NextConfig = {
         hostname: "backapi.hemmx.org",
         pathname: "/uploads/**",
       },
+      {
+        protocol: "https",
+        hostname: "localhost",
+        pathname: "/uploads/**",
+      },
     ],
-    domains: ["backapi.hemmx.org", "localhost"],
   },
 };
 

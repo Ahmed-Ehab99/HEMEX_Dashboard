@@ -20,7 +20,6 @@ interface ProfileContextType {
   isLoading: boolean;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
   error: Error | null;
-  updateProfileImage: (newImage: string) => void;
   refreshProfile: () => Promise<void>;
 }
 
@@ -62,22 +61,19 @@ export const ProfileProvider: React.FC<{
     }
   };
 
-  const updateProfileImage = (newImage: string) => {
-    if (profileData) {
-      setProfileData({
-        ...profileData,
-        image: newImage,
-      });
-    }
-  };
-
   useEffect(() => {
     fetchProfile();
   }, []);
 
   return (
     <ProfileContext.Provider
-      value={{ profileData, isLoading, setIsLoading, error, updateProfileImage, refreshProfile: fetchProfile }}
+      value={{
+        profileData,
+        isLoading,
+        setIsLoading,
+        error,
+        refreshProfile: fetchProfile,
+      }}
     >
       {children}
     </ProfileContext.Provider>
